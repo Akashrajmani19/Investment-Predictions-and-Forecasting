@@ -2,6 +2,27 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import pandas as pd
 import copy
+import plotly.express as px
+import streamlit as st
+
+
+def Simple_line_plot(df, xaxis, yaxis):
+    title = f"{xaxis} v/s {yaxis}"
+    fig = px.line(df, x=xaxis, y=yaxis, title=title)
+    fig.update_layout(height=450)
+    fig.update_xaxes(
+    # rangeslider_visible=True,
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1, label="1m", step="month", stepmode="backward"),
+                dict(count=6, label="6m", step="month", stepmode="backward"),
+                dict(count=1, label="1y", step="year", stepmode="backward"),
+                dict(step="all")
+            ])
+        )
+    )
+    st.plotly_chart(fig)
+
 
 def Compare_Plot(Df, X_axis, column1, column2):
     # Assuming your data is stored in a DataFrame named 'data'
@@ -18,7 +39,7 @@ def Compare_Plot(Df, X_axis, column1, column2):
     #fig.update_layout(xaxis=dict(rangeslider=dict(visible=True)), height=800)
     fig.update_layout(
         #xaxis=dict(rangeslider=dict(visible=True)),
-        height=800,
+        height=800,width = 1400,
         xaxis2=dict(
             rangeslider=dict(visible=True),
             type="date",
@@ -35,8 +56,8 @@ def Compare_Plot(Df, X_axis, column1, column2):
             dict(step="all")
         ])
     )
-)
-    fig.show()
+    )
+    st.plotly_chart(fig)
 
 
 
@@ -57,7 +78,7 @@ def Compare_Plot_bar(Df, X_axis, column1, column2):
     # Update layout to include a single slider below both subplots
     fig.update_layout(
         #xaxis=dict(rangeslider=dict(visible=True)),
-        height=800,
+        height=800,width = 1400,
         xaxis2=dict(
             rangeslider=dict(visible=True),
             type="date",
@@ -78,4 +99,4 @@ def Compare_Plot_bar(Df, X_axis, column1, column2):
         # row=2, col=1
     )
     
-    fig.show()
+    st.plotly_chart(fig)

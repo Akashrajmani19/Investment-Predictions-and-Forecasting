@@ -35,7 +35,7 @@ def ATR(Df, n=7):
     df['TR'] = df[['C_H - C_L', 'C_H - P_C', 'C_L - P_C']].max(axis=1, skipna=False)
     
     # Calculate the Exponential Moving Average (EMA) of the True Range to get the Average True Range (ATR)
-    df['ATR'] = df['TR'].ewm(span=n, min_periods=n).mean()
+    df['ATR'] = df['TR'].ewm(span=n, min_periods=n).mean() 
     
     # Drop the intermediate columns used to calculate TR
     df = df.drop(columns=['C_H - C_L', 'C_H - P_C', 'C_L - P_C', 'TR'])
@@ -178,5 +178,4 @@ def renko_DF(DF):
     renko_df.drop_duplicates(subset="date", keep="last", inplace=True)
     
     return renko_df
-
 

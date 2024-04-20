@@ -119,6 +119,8 @@ def ADX(Df, n=7):
 
 import copy
 import numpy as np
+from stocktrends import indicators
+from stocktrends import Renko
 # from stocktrends import indicators
 # from stocktrends import Renko
 
