@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import tensorflow as tf
 import plotly.express as px
-from src.Forecasting_Stock_Prices.utils.plotting_indicators import Simple_line_plot, Compare_Plot, Compare_Plot_bar
-from Modules.Technical_indicators import ATR, BB, RSI, ADX, MACD, renko_DF
-from src.Forecasting_Stock_Prices.utils.technical_indicators import ATR, BB, RSI, ADX, MACD, renko_DF
-from stocktrends import indicators
-from stocktrends import Renko
+# from src.Forecasting_Stock_Prices.utils.plotting_indicators import Simple_line_plot, Compare_Plot, Compare_Plot_bar
+from Modules.Technical_indicators import ATR, BB, RSI, ADX, MACD
+from Modules.Plotting import Simple_line_plot, Compare_Plot, Compare_Plot_bar
+# from src.Forecasting_Stock_Prices.utils.technical_indicators import ATR, BB, RSI, ADX, MACD
+# from stocktrends import indicators
+# from stocktrends import Renko
 import matplotlib.pyplot as plt
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
