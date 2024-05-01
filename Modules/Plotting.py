@@ -22,7 +22,7 @@ def Compare_Plot(Df, X_axis, column1, column2):
         xaxis2=dict(
             rangeslider=dict(visible=True),
             type="date",
-            range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
+            # range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
         )
     )
     fig.update_xaxes(
@@ -60,8 +60,8 @@ def Compare_Plot_bar(Df, X_axis, column1, column2):
         height=800,
         xaxis2=dict(
             rangeslider=dict(visible=True),
-            type="date",
-            range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
+            type="date"
+            # range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
         )
     )
     
