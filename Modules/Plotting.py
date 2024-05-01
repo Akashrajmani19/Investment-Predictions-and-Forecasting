@@ -1,7 +1,33 @@
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import pandas as pd
+import plotly.express as px
 import copy
+import streamlit as st
+
+def Simple_line_plot(df, xaxis, yaxis):
+    df["Year"] = df["Date"].dt.year
+    year = sorted(list(df['Year'].value_counts().keys()))
+    title = f"{xaxis} v/s {yaxis}"
+    fig = px.line(df, x= xaxis, y= yaxis, color='Year', title=title, 
+              labels={'Adj Close': 'Adjusted Close', 'Date': 'Date'}, 
+              template='plotly_dark')
+    fig.update_xaxes(title_text='Date')
+    fig.update_layout(height=450)
+    fig.update_yaxes(title_text='Adjusted Close')   
+    fig.update_xaxes(
+    # rangeslider_visible=True,
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1, label="1m", step="month", stepmode="backward"),
+                dict(count=6, label="6m", step="month", stepmode="backward"),
+                dict(count=1, label="1y", step="year", stepmode="backward"),
+                dict(step="all")
+            ])
+        )
+    )
+    st.plotly_chart(fig)
+
 
 def Compare_Plot(Df, X_axis, column1, column2):
     # Assuming your data is stored in a DataFrame named 'data'

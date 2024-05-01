@@ -5,11 +5,15 @@ import copy
 import plotly.express as px
 import streamlit as st
 
-
 def Simple_line_plot(df, xaxis, yaxis):
+    df["Year"] = df["Date"].dt.year
     title = f"{xaxis} v/s {yaxis}"
-    fig = px.line(df, x=xaxis, y=yaxis, title=title)
+    fig = px.line(df, x= xaxis, y= yaxis, color='Year', title=title, 
+              labels={'Adj Close': 'Adjusted Close', 'Date': 'Date'}, 
+              template='plotly_dark')
+    fig.update_xaxes(title_text='Date')
     fig.update_layout(height=450)
+    fig.update_yaxes(title_text='Adjusted Close')   
     fig.update_xaxes(
     # rangeslider_visible=True,
         rangeselector=dict(
@@ -22,6 +26,22 @@ def Simple_line_plot(df, xaxis, yaxis):
         )
     )
     st.plotly_chart(fig)
+# def Simple_line_plot(df, xaxis, yaxis):
+#     title = f"{xaxis} v/s {yaxis}"
+#     fig = px.line(df, x=xaxis, y=yaxis, title=title)
+#     fig.update_layout(height=450)
+#     fig.update_xaxes(
+#     # rangeslider_visible=True,
+#         rangeselector=dict(
+#             buttons=list([
+#                 dict(count=1, label="1m", step="month", stepmode="backward"),
+#                 dict(count=6, label="6m", step="month", stepmode="backward"),
+#                 dict(count=1, label="1y", step="year", stepmode="backward"),
+#                 dict(step="all")
+#             ])
+#         )
+#     )
+#     st.plotly_chart(fig)
 
 
 def Compare_Plot(Df, X_axis, column1, column2):
@@ -29,6 +49,7 @@ def Compare_Plot(Df, X_axis, column1, column2):
     # Let's say 'Adj Close' and 'MACD' are the columns you want to plot
     # Create subplots with shared x-axis (date)
     data = copy.deepcopy(Df)
+
     data['Date'] = pd.to_datetime(data['Date'])
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1)
     # Add trace for Adj Close
@@ -42,8 +63,9 @@ def Compare_Plot(Df, X_axis, column1, column2):
         height=800,width = 1400,
         xaxis2=dict(
             rangeslider=dict(visible=True),
-            type="date",
-            range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
+            type="date"
+            # ,
+            # range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
         )
     )
     fig.update_xaxes(
@@ -81,8 +103,9 @@ def Compare_Plot_bar(Df, X_axis, column1, column2):
         height=800,width = 1400,
         xaxis2=dict(
             rangeslider=dict(visible=True),
-            type="date",
-            range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
+            type="date"
+            # ,
+            # range=[data[X_axis].min(), data[X_axis].min() + pd.Timedelta(days=365)]  # Display one year initially
         )
     )
     
