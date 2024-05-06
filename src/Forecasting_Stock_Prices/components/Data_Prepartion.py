@@ -17,7 +17,6 @@ class Data_Caller:
     def __init__(self,ticker):
         self.ticker = ticker
         ''' Creating object of DataIngestionConfig class to provide path to save all artifacts at artifacts folder'''
-        self.ingestion_config = DataIngestionConfig()
 
     def data_ingestion(self):
         logging.info('Data ingestion started.')
@@ -29,16 +28,22 @@ class Data_Caller:
             df = pd.read_csv(path_data)
             logging.info('Data has been imported from drive')
             df['Date'] = pd.to_datetime(df['Date'])
-            df.set_index('Date')
+            
 
 
-            new_data = yf.download("MSFT", period = '1mo')
+            new_data = yf.download(self.ticker, period = '6mo')
+            new_data = new_data.reset_index()
             logging.info('New Data has been imported from drive')
 
-            duplicates = pd.merge(df, new_data, how='inner')
-            non_duplicates = new_data[~new_data.index.isin(duplicates.index)]
-            df = pd.concat([df, non_duplicates], ignore_index=True)
 
+            combined_data = pd.concat([df, new_data])
+
+            # Remove duplicates based on timestamp
+            combined_data.drop_duplicates(subset='Date', inplace=True)  # Replace 'timestamp_column' with your actual timestamp column name
+
+            # Sort the combined data based on timestamp
+            combined_data.sort_values(by='Date', inplace=True)  # Replace 'timestamp_column' with your actual timestamp column name
+            df = combined_data.ffill()
             df.to_csv(path_data)
             logging.info('New data added to original data')
             return df

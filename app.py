@@ -5,19 +5,20 @@ import tensorflow as tf
 import plotly.express as px
 from src.Forecasting_Stock_Prices.utils.plotting_indicators import Simple_line_plot, Compare_Plot, Compare_Plot_bar
 from Modules.Technical_indicators import ATR, BB, RSI, ADX, MACD
-# from Modules.Plotting import Simple_line_plot, Compare_Plot, Compare_Plot_bar
 from src.Forecasting_Stock_Prices.utils.technical_indicators import ATR, BB, RSI, ADX, MACD
-# from stocktrends import indicators
-# from stocktrends import Renko
 import matplotlib.pyplot as plt
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
-import warnings
-warnings.filterwarnings("ignore")
 import copy
 import numpy as np
-
-
+from src.Forecasting_Stock_Prices.logger import logging
+from src.Forecasting_Stock_Prices.exception import CustomException
+import yfinance as yf
+from src.Forecasting_Stock_Prices.components.Data_Prepartion import Data_Caller 
+from src.Forecasting_Stock_Prices.components.model_trainer import Model_Trainner
+import warnings
+warnings.filterwarnings("ignore")
+ 
 # from src.Forecasting_Stock_Prices.components.Data_ingestion import Data_Caller
 st.set_page_config(layout="wide")
 st.header("Bitcoin Price Projection : Exploring Forecasting Strategies")
@@ -28,13 +29,14 @@ st.sidebar.markdown("""
 
 upload_file = st.sidebar.file_uploader("Upload your input csv file", type = ['CSV'])
 stock = st.selectbox('Select the company',['BTC-USD'])
+
+
+
 if upload_file is not None:
     df = pd.read_csv(upload_file)
 else:
-    data_address =stock+".csv"
-    file_path = f"data\{data_address}"
-    df = pd.read_csv(file_path)
-    df['Date'] = pd.to_datetime(df['Date'] )
+    df_obj = Data_Caller(stock)
+    df = df_obj.data_ingestion()
 df_time = df.set_index('Date')
 # st.write(df)
 # Simple_line_plot(df,'Date', 'Adj Close')
@@ -43,6 +45,9 @@ with col1:
     st.write(df_time.sort_index(ascending=False))
 with col2:
     Simple_line_plot(df, 'Date', 'Adj Close')
+
+
+
 def apply_technical_indicators(df):
     df = MACD(df)
     df = BB(df)
@@ -50,6 +55,9 @@ def apply_technical_indicators(df):
     df['RSI'] = RSI(df)
     df['ADX']= ADX(df)
     return df
+
+
+
 def show_technical_analysis(df):
     df = apply_technical_indicators(df)
     # st.write(df)
@@ -124,57 +132,82 @@ def show_technical_analysis(df):
 
 
 def show_forecasting(df):
-    df = apply_technical_indicators(df)
-    data = df.drop(columns = ['Date', 'Open', 'High', 'Low', 'Close','Volume', 'MB', 'UB', 'LB'])
-    df_copy = copy.deepcopy(df)
-    st.subheader(f"Price Forecasting using last 15 days performance of {stock}")
-
-    df_predict = []
-    data = data.iloc[-15:]
-    data = np.array(data)
-    data = np.array(data)
-    df_predict.append(data)
-    data = tf.convert_to_tensor(df_predict)
+    nf_t = Model_Trainner(df)
+    y_hat_df = nf_t.initiate_model_trainning(h = 15, input_size = 30)
 
 
-    saved_model_path = r'Research\Model\model_11_multivariate_parameter\20240418-184534\best_model.h5'
-    loaded_model = tf.keras.models.load_model(saved_model_path)
-    predicted_values = loaded_model.predict(data)
-    predicted_values = (np.array(predicted_values)).T
-
-
-    next_7_days_dates = []
-    last_date = pd.to_datetime(df_time.index[-1])
-    for i in range(0, 7):
-        next_day = last_date + pd.Timedelta(days=i)
-        next_7_days_dates.append(next_day)
-    next_7_days_price = []
-    for i in range(7):
-        next_7_days_price.append(float(predicted_values[i]))
-
-    df_pred = pd.DataFrame({'Adj Close':next_7_days_price, 'Date':next_7_days_dates })
-
-    st.subheader("""
-    **Forcasting for next saven days**
-    """) 
-    df_30 = df.iloc[-30:]
-    st.write(df_pred.set_index('Date').T)
-    fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
-    fig.add_trace(go.Scatter(x=df_30['Date'], y=df_30['Adj Close'], mode='lines', name=df_30['Adj Close'].name), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df_pred['Date'], y=df_pred['Adj Close'], mode='lines', name=df_pred['Adj Close'].name),row=1, col=1)
-    fig.update_layout(title = 'Bolinger Band Technical indicator',xaxis2=dict(rangeslider=dict(visible=True)),
-    height=800,width = 1400)
+    fig = make_subplots(rows=1, cols=1, shared_xaxes=True, vertical_spacing=0.1)
+    data_df = df.iloc[-30:]
+    fig.add_trace(go.Scatter(x=data_df['Date'], y=data_df['Adj Close'], mode='lines', name='data'),row=1, col=1)
+    fig.add_trace(go.Scatter(x=y_hat_df['ds'], y=y_hat_df['NBEATS'], mode='lines', name='NBEATS_Prediction'),row=1, col=1)
+    fig.add_trace(go.Scatter(x=y_hat_df['ds'], y=y_hat_df['NHITS'], mode='lines', name='NHITS_Prediction'),row=1, col=1)
+ 
+    fig.update_layout(title = 'Next 15 days Prediction Using NBEATS, NHITS and NBEATSx Algorithms',
+                        xaxis=dict(rangeslider=dict(visible=True)), height=800, width = 1400)
     fig.update_xaxes(
-    rangeselector=dict(
-    buttons=list([
-        dict(count=1, label="1m", step="month", stepmode="backward"),
-        dict(count=6, label="6m", step="month", stepmode="backward"),
-        dict(count=1, label="YTD", step="year", stepmode="todate"),
-        dict(count=1, label="1y", step="year", stepmode="backward"),
-        dict(step="all")
-                ])
-                )
-            )
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1, label="1m", step="month", stepmode="backward"),
+                dict(count=6, label="6m", step="month", stepmode="backward"),
+                dict(count=1, label="YTD", step="year", stepmode="todate"),
+                dict(count=1, label="1y", step="year", stepmode="backward"),
+                dict(step="all")
+            ])
+        )
+    )
+
+
+    # df = apply_technical_indicators(df)
+    # data = df.drop(columns = ['Date', 'Open', 'High', 'Low', 'Close','Volume', 'MB', 'UB', 'LB'])
+    # df_copy = copy.deepcopy(df)
+    # st.subheader(f"Price Forecasting using last 15 days performance of {stock}")
+
+    # df_predict = []
+    # data = data.iloc[-15:]
+    # data = np.array(data)
+    # data = np.array(data)
+    # df_predict.append(data)
+    # data = tf.convert_to_tensor(df_predict)
+
+
+    # saved_model_path = r'Research\Model\model_11_multivariate_parameter\20240418-184534\best_model.h5'
+    # loaded_model = tf.keras.models.load_model(saved_model_path)
+    # predicted_values = loaded_model.predict(data)
+    # predicted_values = (np.array(predicted_values)).T
+
+
+    # next_7_days_dates = []
+    # last_date = pd.to_datetime(df_time.index[-1])
+    # for i in range(0, 7):
+    #     next_day = last_date + pd.Timedelta(days=i)
+    #     next_7_days_dates.append(next_day)
+    # next_7_days_price = []
+    # for i in range(7):
+    #     next_7_days_price.append(float(predicted_values[i]))
+
+    # df_pred = pd.DataFrame({'Adj Close':next_7_days_price, 'Date':next_7_days_dates })
+
+    # st.subheader("""
+    # **Forcasting for next saven days**
+    # """) 
+    # df_30 = df.iloc[-30:]
+    # st.write(df_pred.set_index('Date').T)
+    # fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
+    # fig.add_trace(go.Scatter(x=df_30['Date'], y=df_30['Adj Close'], mode='lines', name=df_30['Adj Close'].name), row=1, col=1)
+    # fig.add_trace(go.Scatter(x=df_pred['Date'], y=df_pred['Adj Close'], mode='lines', name=df_pred['Adj Close'].name),row=1, col=1)
+    # fig.update_layout(title = 'Bolinger Band Technical indicator',xaxis2=dict(rangeslider=dict(visible=True)),
+    # height=800,width = 1400)
+    # fig.update_xaxes(
+    # rangeselector=dict(
+    # buttons=list([
+    #     dict(count=1, label="1m", step="month", stepmode="backward"),
+    #     dict(count=6, label="6m", step="month", stepmode="backward"),
+    #     dict(count=1, label="YTD", step="year", stepmode="todate"),
+    #     dict(count=1, label="1y", step="year", stepmode="backward"),
+    #     dict(step="all")
+    #             ])
+    #             )
+    #         )
     st.plotly_chart(fig)
     #st.write(predicted_values)
 
